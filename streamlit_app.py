@@ -3,29 +3,32 @@ import pathlib
 import re
 
 # --- Configuration ---
-APP_DIR = pathlib.Path('app')
-MD_DIR = pathlib.Path('md')
+APP_DIR = pathlib.Path("app")
+MD_DIR = pathlib.Path("md")
+
 
 # --- Helper Functions ---
 def update_params():
     """Updates the URL query param to the selected number."""
     st.query_params.day = st.session_state.day_selection
 
+
 def format_day(day_num):
     """Formats the number (e.g., 2) as a display string (e.g., 'Day 2')."""
-    return f'Day {day_num}'
+    return f"Day {day_num}"
+
 
 # --- File Discovery ---
 try:
     matches = []
-    for path in APP_DIR.glob('day*.py'):
-        match = re.search(r'day(\d+)\.py', path.name)
+    for path in APP_DIR.glob("day*.py"):
+        match = re.search(r"day(\d+)\.py", path.name)
         if match:
             matches.append((int(match.group(1)), path))
 
     # Sort by number, e.g., (1, path) comes before (2, path)
     matches.sort()
-    
+
     # Create a list of the numbers (options)
     day_options = [num for num, path in matches]
 
@@ -36,20 +39,20 @@ except FileNotFoundError:
 query_params = st.query_params
 
 # Determine the initial day number
-initial_day_num = day_options[0] if day_options else None # Default to the first day's number (e.g., 1)
+initial_day_num = day_options[0] if day_options else None  # Default to the first day's number (e.g., 1)
 
 if "day" in query_params and day_options:
     try:
         # Convert ?day=2 (string "2") to integer 2
         day_num_from_url = int(query_params.day)
-        
+
         # Check if the number is in our valid list
         if day_num_from_url in day_options:
-            initial_day_num = day_num_from_url # Override default
-            
+            initial_day_num = day_num_from_url  # Override default
+
     except (ValueError, TypeError):
         # Ignore invalid params like ?day=abc or ?day=
-        pass 
+        pass
 
 # Set the session state (now storing a number)
 # This is done only once if it's not already set
@@ -75,16 +78,18 @@ st.logo(logo_full, link="https://streamlit.io", icon_image=logo_icon, size="larg
 
 # --- Sidebar ---
 st.sidebar.title("30 Days of AI")
-st.sidebar.markdown("The `#30DaysOfAI` is a coding challenge designed to help you get started in building AI apps with Streamlit.")
+st.sidebar.markdown(
+    "The `#30DaysOfAI` is a coding challenge designed to help you get started in building AI apps with Streamlit."
+)
 
 # Create the selectbox (only if there are day options)
 if day_options:
     selected_day_num = st.sidebar.selectbox(
-        'Start the Challenge 👇', 
-        day_options, # Use the list of numbers [1, 2, ...] as options
+        "Start the Challenge 👇",
+        day_options,  # Use the list of numbers [1, 2, ...] as options
         key="day_selection",
-        on_change=update_params, # Updates URL to ?day=2
-        format_func=format_day # Use this function to display "Day 1", "Day 2", ...
+        on_change=update_params,  # Updates URL to ?day=2
+        format_func=format_day,  # Use this function to display "Day 1", "Day 2", ...
     )
 else:
     selected_day_num = None
@@ -94,7 +99,7 @@ else:
 if not day_options:
     # --- Welcome Page (No Challenge Files Found) ---
     st.title("🚀 Welcome to the 30 Days of AI Challenge!")
-    
+
     st.markdown("""
     Welcome! 👋
     
@@ -135,18 +140,17 @@ if not day_options:
     
     Share your journey on social with **#30DaysOfAI** 🚀
     """)
-    
+
     st.info("💡 **Tip**: Daily challenges will appear in the sidebar once they're published.")
 
 elif selected_day_num:
-    
     # Create the main display name (e.g., "Day 2")
     display_name = format_day(selected_day_num)
-    
+
     try:
         # --- 1. Load Python File Content ---
-        py_file_path = APP_DIR / f'day{selected_day_num}.py'
-        lines = py_file_path.read_text(encoding='utf-8').splitlines()
+        py_file_path = APP_DIR / f"day{selected_day_num}.py"
+        lines = py_file_path.read_text(encoding="utf-8").splitlines()
         subtitle = lines[1].lstrip("# ") if len(lines) > 1 else ""
         code_to_display = "\n".join(lines[3:])
 
@@ -154,9 +158,9 @@ elif selected_day_num:
         intro_content = ""
         expander_content = ""
         try:
-            md_file_path = MD_DIR / f'day{selected_day_num}.md'
+            md_file_path = MD_DIR / f"day{selected_day_num}.md"
             if md_file_path.is_file():
-                full_explanation_content = md_file_path.read_text(encoding='utf-8')
+                full_explanation_content = md_file_path.read_text(encoding="utf-8")
                 parts = full_explanation_content.split("---", 1)
                 intro_content = parts[0].strip()
                 if len(parts) == 2:
@@ -165,9 +169,9 @@ elif selected_day_num:
             st.warning(f"Could not load explanation file: {e}")
 
         # --- 3. Display Content in Order ---
-        
+
         # 3.1. Header and Subheader
-        st.header(f':primary[:material/calendar_today:] {display_name}')
+        st.header(f":primary[:material/calendar_today:] {display_name}")
         if subtitle:
             st.subheader(subtitle)
 
@@ -177,14 +181,14 @@ elif selected_day_num:
 
         # 3.3. Code Expander
         with st.expander("See the code:", expanded=True):
-            st.code(code_to_display, language='python')
-            
+            st.code(code_to_display, language="python")
+
         # 3.4. Explanation Expander
         if expander_content:
             with st.expander("See the explanation", expanded=True):
                 st.markdown(expander_content)
 
     except FileNotFoundError:
-        st.error(f'Error: Could not find file: {py_file_path}')
+        st.error(f"Error: Could not find file: {py_file_path}")
     except Exception as e:
         st.error(f"An error occurred while trying to read the file: {e}")
